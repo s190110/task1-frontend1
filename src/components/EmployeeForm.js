@@ -1,12 +1,18 @@
 import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
+import { Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import Select from "react-select";
 import { fetchSkills, submitEmployee } from "../services/api";
+import { fetchDepartmentsByWingId } from "../services/api";
+import { fetchWings } from "../services/api";
 
 const EmployeeForm = () => {
   const [skillsOptions, setSkillsOptions] = useState([]);
   const [submitted, setSubmitted] = useState(false);
+
+  const [departments, setDepartments] = useState([]);
+  const [wings, setWings] = useState([]);
 
   useEffect(() => {
     fetchSkills().then((res) => {
@@ -19,6 +25,12 @@ const EmployeeForm = () => {
     });
   }, []);
 
+  useEffect(() => {
+    fetchWings()
+      .then((res) => setWings(res.data))
+      .catch((err) => console.error(err));
+  }, []);
+
   const formik = useFormik({
     initialValues: {
       firstName: "",
@@ -29,6 +41,8 @@ const EmployeeForm = () => {
       dateOfJoined: "",
       address: "",
       skills: [],
+      wing: "",
+      department: "",
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("Required"),
@@ -41,6 +55,8 @@ const EmployeeForm = () => {
     onSubmit: async (values) => {
       const payload = {
         ...values,
+        wing: { id: values.wing },
+        department: { id: values.department },
         skills: values.skills.map((s) => ({ id: s.value })),
       };
       await submitEmployee(payload);
@@ -141,6 +157,46 @@ const EmployeeForm = () => {
           value={formik.values.skills}
           onChange={(value) => formik.setFieldValue("skills", value)}
         />
+      </div>
+
+      <div>
+        <div>
+          <label>Wing</label>
+          <select
+            name="wing"
+            value={formik.values.wing}
+            onChange={async (e) => {
+              const selectedWingId = e.target.value;
+              formik.setFieldValue("wing", selectedWingId);
+              formik.setFieldValue("department", "");
+              const res = await fetchDepartmentsByWingId(selectedWingId);
+              setDepartments(res.data);
+            }}
+          >
+            <option value="">Select Wing</option>
+            {wings.map((w) => (
+              <option key={w.id} value={w.id}>
+                {w.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label>Department</label>
+          <select
+            name="department"
+            value={formik.values.department}
+            onChange={formik.handleChange}
+          >
+            <option value="">Select Department</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <button type="submit">Submit</button>
