@@ -1,0 +1,55 @@
+.employeeform {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  background-color: #f8f9fa;
+}
+
+.experience-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #ccc;
+  margin-bottom: 10px;
+  background-color: #fff;
+  border-radius: 6px;
+}
+
+.experience-row input {
+  width: 100%;
+  padding: 5px;
+}
+
+.experience-actions {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.experience-label {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.employeeform h5 {
+  margin-top: 20px;
+}
+
+.employeeform textarea {
+  min-height: 100px;
+}
+
+.form-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.form-row label {
+  margin-right: 15px;
+  min-width: 100px;
+}

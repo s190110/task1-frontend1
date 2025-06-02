@@ -6,10 +6,13 @@ import Home from "./components/Home";
 import EmployeeForm from "./components/EmployeeForm";
 import EmployeeList from "./components/EmployeeList";
 import EmployeeDetails from "./components/EmployeeDetails";
+import Navbar from "./components/NavBar";
 
 function App() {
   return (
     <Router>
+      <Navbar />
+
       <Routes>
         <Route path="/" element={<Home />} />
 
