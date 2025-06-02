@@ -1,13 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { fetchEmployees } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchEmployees().then((res) => setEmployees(res.data));
+    const fetchData = async () => {
+      const response = await axios.get("http://localhost:8080/api/employees");
+
+      console.log("The Response :: ", response?.data);
+
+      setEmployees(response?.data);
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -22,19 +31,22 @@ const EmployeeList = () => {
           </tr>
         </thead>
         <tbody>
-          {employees.map((emp, index) => (
-            <tr key={emp.id}>
-              <td>{index + 1}</td>
-              <td>
-                {emp.firstName} {emp.lastName}
-              </td>
-              <td>
-                <button onClick={() => navigate(`/employees/${emp.id}`)}>
-                  View
-                </button>
-              </td>
-            </tr>
-          ))}
+          {employees?.length > 0 &&
+            employees?.map((emp, index) => {
+              return (
+                <tr key={emp?.id}>
+                  <td>{index + 1}</td>
+                  <td>
+                    {emp?.firstName} {emp?.lastName}
+                  </td>
+                  <td>
+                    <button onClick={() => navigate(`/employees/${emp.id}`)}>
+                      View
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
     </div>

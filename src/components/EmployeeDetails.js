@@ -37,8 +37,41 @@ const EmployeeDetails = () => {
         <strong>Address:</strong> {employee.address}
       </p>
       <p>
-        <strong>Skills:</strong> {employee.skills.map((s) => s.name).join(", ")}
+        <strong>Skills:</strong>{" "}
+        {employee.skills?.map((s) => s.name).join(", ") || "None"}
       </p>
+
+      <h3>Experience</h3>
+      {employee.experiences?.length > 0 ? (
+        <table border="1" cellPadding="5">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Location</th>
+              <th>Organization</th>
+              <th>From</th>
+              <th>To</th>
+              <th>Experience</th>
+            </tr>
+          </thead>
+          <tbody>
+            {employee.experiences.map((exp, index) => (
+              <tr key={index}>
+                <td>{index + 1}</td>
+                <td>{exp.location}</td>
+                <td>{exp.organization}</td>
+                <td>{exp.fromDate}</td>
+                <td>{exp.toDate}</td>
+                <td>{exp.experience}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>No experience records found.</p>
+      )}
+
+      <p>Total Experience :{employee?.totalExperience}</p>
     </div>
   );
 };
