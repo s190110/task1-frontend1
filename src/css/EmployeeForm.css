@@ -1,10 +1,17 @@
 .employeeform {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding-left: 50px;
   border: 1px solid #ddd;
   border-radius: 10px;
   background-color: #f8f9fa;
+}
+
+.error {
+  color: red;
+  font-size: 0.9rem;
+  margin-top: 4px;
+  padding-left: 12px;
 }
 
 .experience-row {
@@ -15,7 +22,7 @@
   padding: 10px;
   border: 1px solid #ccc;
   margin-bottom: 10px;
-  background-color: #fff;
+  background-color: #ccd3d9;
   border-radius: 6px;
 }
 

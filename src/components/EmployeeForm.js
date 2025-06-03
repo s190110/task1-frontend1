@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useFormik } from "formik";
-import * as Yup from "yup";
 import "../css/EmployeeForm.css";
+import { employeeValidationSchema } from "../validations/employeeValidationSchema";
 import {
   fetchSkills,
   submitEmployee,
@@ -27,12 +27,7 @@ const EmployeeForm = () => {
         }))
       );
     });
-  }, []);
-
-  useEffect(() => {
-    fetchWings()
-      .then((res) => setWings(res.data))
-      .catch((err) => console.error(err));
+    fetchWings().then((res) => setWings(res.data));
   }, []);
 
   const formik = useFormik({
@@ -60,14 +55,7 @@ const EmployeeForm = () => {
       totalExperience: "",
       photo: "",
     },
-    validationSchema: Yup.object({
-      firstName: Yup.string().required("Required"),
-      lastName: Yup.string().required("Required"),
-      gender: Yup.string().required("Required"),
-      dateOfBirth: Yup.date().required("Required"),
-      dateOfJoined: Yup.date().required("Required"),
-      address: Yup.string().required("Required"),
-    }),
+    validationSchema: employeeValidationSchema,
     onSubmit: async (values) => {
       const payload = {
         ...values,
@@ -75,13 +63,13 @@ const EmployeeForm = () => {
         wing: { id: values.wing },
         department: { id: values.department },
         skills: values.skills.map((s) => ({ id: s.value })),
-        totalExperience: totalExperience,
+        totalExperience,
         photo: values.photo,
       };
       await submitEmployee(payload);
       setSubmitted(true);
-
       formik.resetForm();
+      setTotalExperience("");
     },
   });
 
@@ -89,32 +77,26 @@ const EmployeeForm = () => {
     if (formik.values.dateOfBirth) {
       const dob = new Date(formik.values.dateOfBirth);
       const today = new Date();
-
       let age = today.getFullYear() - dob.getFullYear();
       const m = today.getMonth() - dob.getMonth();
-
       if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
         age--;
       }
-
       formik.setFieldValue("age", age);
     }
   }, [formik.values.dateOfBirth]);
 
   const calculateTotalExperience = (experiences) => {
     let totalMonths = 0;
-
     experiences.forEach((exp) => {
       if (exp.fromDate && exp.toDate) {
         const fromDate = new Date(exp.fromDate);
         const toDate = new Date(exp.toDate);
         if (!isNaN(fromDate) && !isNaN(toDate)) {
-          const months = differenceInMonths(toDate, fromDate);
-          totalMonths += months;
+          totalMonths += differenceInMonths(toDate, fromDate);
         }
       }
     });
-
     const years = Math.floor(totalMonths / 12);
     const months = totalMonths % 12;
     setTotalExperience(`${years}y ${months}m`);
@@ -138,7 +120,7 @@ const EmployeeForm = () => {
     }
 
     formik.setFieldValue("experiences", updated);
-    calculateTotalExperience(updated); // ⬅️ Recalculate total
+    calculateTotalExperience(updated);
   };
 
   const addExperience = () => {
@@ -146,7 +128,6 @@ const EmployeeForm = () => {
       alert("You can only add up to 5 experiences.");
       return;
     }
-
     formik.setFieldValue("experiences", [
       ...formik.values.experiences,
       {
@@ -163,32 +144,54 @@ const EmployeeForm = () => {
     const updated = [...formik.values.experiences];
     updated.splice(index, 1);
     formik.setFieldValue("experiences", updated);
-    calculateTotalExperience(updated); // ⬅️ Recalculate total
+    calculateTotalExperience(updated);
   };
 
   return (
     <form onSubmit={formik.handleSubmit}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <h2>
+          <u>Employee Registration Form</u>
+        </h2>
+      </div>
       <div className="employeeform">
-        <div className="form-row">
-          <label>First Name : </label>
+        {/* First Name */}
+        <div className="form-row" style={{ paddingTop: 20 }}>
+          <label>First Name:</label>
           <input
             name="firstName"
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             value={formik.values.firstName}
           />
+          {formik.touched.firstName && formik.errors.firstName && (
+            <div className="error">{formik.errors.firstName}</div>
+          )}
         </div>
 
+        {/* Last Name */}
         <div className="form-row">
-          <label>Last Name :</label>
+          <label>Last Name:</label>
           <input
             name="lastName"
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             value={formik.values.lastName}
           />
+          {formik.touched.lastName && formik.errors.lastName && (
+            <div className="error">{formik.errors.lastName}</div>
+          )}
         </div>
 
+        {/* Gender */}
         <div className="form-row">
-          <label>Gender :</label>
+          <label>Gender:</label>
           <label>
             <input
               type="radio"
@@ -196,7 +199,7 @@ const EmployeeForm = () => {
               value="Male"
               onChange={formik.handleChange}
               checked={formik.values.gender === "Male"}
-            />{" "}
+            />
             Male
           </label>
           <label>
@@ -206,53 +209,70 @@ const EmployeeForm = () => {
               value="Female"
               onChange={formik.handleChange}
               checked={formik.values.gender === "Female"}
-            />{" "}
+            />
             Female
           </label>
+          {formik.touched.gender && formik.errors.gender && (
+            <div className="error">{formik.errors.gender}</div>
+          )}
         </div>
 
+        {/* Date of Birth */}
         <div className="form-row">
-          <label>Date of Birth :</label>
+          <label>Date of Birth:</label>
           <input
             type="date"
             name="dateOfBirth"
             onChange={formik.handleChange}
+            onBlur={formik.handleBlur}
             value={formik.values.dateOfBirth}
           />
+          {formik.touched.dateOfBirth && formik.errors.dateOfBirth && (
+            <div className="error">{formik.errors.dateOfBirth}</div>
+          )}
         </div>
 
+        {/* Age */}
         <div className="form-row">
-          <label>Age :</label>
+          <label>Age:</label>
           <input name="age" value={formik.values.age} readOnly />
         </div>
 
+        {/* Date of Joining */}
         <div className="form-row">
-          <label>Date of Joining :</label>
+          <label>Date of Joining:</label>
           <input
             type="date"
             name="dateOfJoined"
             onChange={formik.handleChange}
             value={formik.values.dateOfJoined}
           />
+          {formik.touched.dateOfJoined && formik.errors.dateOfJoined && (
+            <div className="error">{formik.errors.dateOfJoined}</div>
+          )}
         </div>
 
+        {/* Address */}
         <div className="form-row">
-          <label>Address :</label>
+          <label>Address:</label>
           <textarea
             name="address"
             onChange={formik.handleChange}
             value={formik.values.address}
           ></textarea>
+          {formik.touched.address && formik.errors.address && (
+            <div className="error">{formik.errors.address}</div>
+          )}
         </div>
 
+        {/* Skills */}
         <div className="form-row">
           <label>Skills:</label>
           <div className="form-check d-flex flex-wrap gap-3">
             {skillsOptions.map((skill) => (
-              <div key={skill.value} className="form-check">
+              <div key={skill.value}>
                 <input
                   type="checkbox"
-                  id={skill.value}
                   name="skills"
                   value={skill.value}
                   checked={formik.values.skills.some(
@@ -261,7 +281,6 @@ const EmployeeForm = () => {
                   onChange={(e) => {
                     const checked = e.target.checked;
                     const selectedSkills = formik.values.skills;
-
                     if (checked) {
                       formik.setFieldValue("skills", [
                         ...selectedSkills,
@@ -274,18 +293,19 @@ const EmployeeForm = () => {
                       );
                     }
                   }}
-                  className="form-check-input"
                 />
-                <label htmlFor={skill.value} className="form-check-label">
-                  {skill.label}
-                </label>
+                <label>{skill.label}</label>
               </div>
             ))}
           </div>
+          {formik.touched.skills && formik.errors.skills && (
+            <div className="error">{formik.errors.skills}</div>
+          )}
         </div>
 
+        {/* Wing and Department */}
         <div className="form-row">
-          <label>Wing :</label>
+          <label>Wing:</label>
           <select
             name="wing"
             value={formik.values.wing}
@@ -304,10 +324,13 @@ const EmployeeForm = () => {
               </option>
             ))}
           </select>
+          {formik.touched.wing && formik.errors.wing && (
+            <div className="error">{formik.errors.wing}</div>
+          )}
         </div>
 
         <div className="form-row">
-          <label>Department</label>
+          <label>Department:</label>
           <select
             name="department"
             value={formik.values.department}
@@ -320,123 +343,120 @@ const EmployeeForm = () => {
               </option>
             ))}
           </select>
+          {formik.touched.department && formik.errors.department && (
+            <div className="error">{formik.errors.department}</div>
+          )}
         </div>
+
+        {/* Experience Radio */}
         <div className="form-row">
           <label>Do you have any experience?</label>
-          <div>
-            <label>
-              <input
-                type="radio"
-                name="hasExperience"
-                value="yes"
-                onChange={formik.handleChange}
-                checked={formik.values.hasExperience === "yes"}
-              />{" "}
-              Yes
-            </label>
-            <label className="ms-3">
-              <input
-                type="radio"
-                name="hasExperience"
-                value="no"
-                onChange={(e) => {
-                  formik.handleChange(e);
-                  formik.setFieldValue("experiences", []); // Clear experience if "No"
-                  setTotalExperience("");
-                }}
-                checked={formik.values.hasExperience === "no"}
-              />{" "}
-              No
-            </label>
-          </div>
+          <label>
+            <input
+              type="radio"
+              name="hasExperience"
+              value="yes"
+              onChange={formik.handleChange}
+              checked={formik.values.hasExperience === "yes"}
+            />
+            Yes
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="hasExperience"
+              value="no"
+              onChange={(e) => {
+                formik.handleChange(e);
+                formik.setFieldValue("experiences", []);
+                setTotalExperience("");
+              }}
+              checked={formik.values.hasExperience === "no"}
+            />
+            No
+          </label>
+          {formik.touched.hasExperience && formik.errors.hasExperience && (
+            <div className="error">{formik.errors.hasExperience}</div>
+          )}
         </div>
 
+        {/* Experience Fields */}
         {formik.values.hasExperience === "yes" && (
-          <div>
-            <div>
-              <h5>Experience</h5>
-              <div className="experience-headings d-flex align-items-center gap-2 mb-2 fw-bold">
-                <span style={{ width: "20px" }}></span>{" "}
-                <span style={{ flex: 1 }}>Location</span>
-                <span style={{ flex: 1 }}>Organization</span>
-                <span style={{ flex: 1 }}>From Date</span>
-                <span style={{ flex: 1 }}>To Date</span>
-                <span style={{ width: "80px" }}></span>
-              </div>
-
-              {formik.values.experiences.map((exp, index) => (
-                <div
-                  key={index}
-                  className="experience-row d-flex align-items-center gap-2 mb-2"
-                >
-                  <strong>{index + 1}.</strong>
-
-                  <input
-                    placeholder="Location"
-                    name={`experiences.${index}.location`}
-                    value={exp.location}
-                    onChange={(e) =>
-                      handleExperienceChange(index, "location", e.target.value)
-                    }
-                  />
-
-                  <input
-                    placeholder="Organization"
-                    name={`experiences.${index}.organization`}
-                    value={exp.organization}
-                    onChange={(e) =>
-                      handleExperienceChange(
-                        index,
-                        "organization",
-                        e.target.value
-                      )
-                    }
-                  />
-
-                  <input
-                    type="date"
-                    name={`experiences.${index}.fromDate`}
-                    value={exp.fromDate}
-                    onChange={(e) =>
-                      handleExperienceChange(index, "fromDate", e.target.value)
-                    }
-                  />
-
-                  <input
-                    type="date"
-                    name={`experiences.${index}.toDate`}
-                    value={exp.toDate}
-                    onChange={(e) =>
-                      handleExperienceChange(index, "toDate", e.target.value)
-                    }
-                  />
-
-                  <div className="experience-actions">
-                    <button
-                      type="button"
-                      onClick={() => removeExperience(index)}
-                      className="btn btn-sm btn-outline-danger"
-                    >
-                      Delete
-                    </button>
+          <>
+            <h5>Experience</h5>
+            {formik.values.experiences.map((exp, index) => (
+              <div key={index} className="experience-row">
+                <input
+                  placeholder="Location"
+                  value={exp.location}
+                  onChange={(e) =>
+                    handleExperienceChange(index, "location", e.target.value)
+                  }
+                />
+                {formik.errors.experiences?.[index]?.location && (
+                  <div className="error">
+                    {formik.errors.experiences[index].location}
                   </div>
-                </div>
-              ))}
-            </div>
+                )}
 
-            <div className="d-flex justify-content-end mt-2">
-              <button
-                type="button"
-                onClick={addExperience}
-                className="btn btn-m btn-outline-primary"
-              >
-                Add Experience
-              </button>
-            </div>
-          </div>
+                <input
+                  placeholder="Organization"
+                  value={exp.organization}
+                  onChange={(e) =>
+                    handleExperienceChange(
+                      index,
+                      "organization",
+                      e.target.value
+                    )
+                  }
+                />
+                {formik.errors.experiences?.[index]?.organization && (
+                  <div className="error">
+                    {formik.errors.experiences[index].organization}
+                  </div>
+                )}
+
+                <input
+                  type="date"
+                  value={exp.fromDate}
+                  onChange={(e) =>
+                    handleExperienceChange(index, "fromDate", e.target.value)
+                  }
+                />
+                {formik.errors.experiences?.[index]?.fromDate && (
+                  <div className="error">
+                    {formik.errors.experiences[index].fromDate}
+                  </div>
+                )}
+
+                <input
+                  type="date"
+                  value={exp.toDate}
+                  onChange={(e) =>
+                    handleExperienceChange(index, "toDate", e.target.value)
+                  }
+                />
+                {formik.errors.experiences?.[index]?.toDate && (
+                  <div className="error">
+                    {formik.errors.experiences[index].toDate}
+                  </div>
+                )}
+
+                <button type="button" onClick={() => removeExperience(index)}>
+                  Delete
+                </button>
+              </div>
+            ))}
+            <button type="button" onClick={addExperience}>
+              Add Experience
+            </button>
+          </>
         )}
 
-        <div className="form-row">Total Experience : {totalExperience}</div>
+        {/* Total Experience */}
+        <div className="form-row">Total Experience: {totalExperience}</div>
+
+        {/* Photo Upload */}
         <div className="form-row">
           <label>Upload Photo:</label>
           <input
@@ -458,40 +478,35 @@ const EmployeeForm = () => {
 
         {photoPreview && (
           <div className="form-row">
-            <label>Preview:</label>
             <img
               src={photoPreview}
-              alt="Employee"
-              style={{ width: "120px", height: "120px", objectFit: "cover" }}
+              alt="Preview"
+              style={{ width: "100px", height: "100px" }}
             />
           </div>
         )}
 
-        <div
-          style={{
-            display: "flex",
-            gap: 300,
-            marginTop: "1rem",
-          }}
-        >
-          <button type="submit" className="btn btn-success mt-3">
+        {/* Buttons */}
+        <div className="form-row" style={{ gap: 100 }}>
+          <button type="submit" className="btn btn-success">
             Submit
           </button>
-
           <button
             type="button"
-            className="btn btn-secondary mt-3 ml-2"
             onClick={() => {
               formik.resetForm();
               setSubmitted(false);
               setTotalExperience("");
             }}
+            className="btn btn-secondary"
           >
             Reset
           </button>
         </div>
 
-        {submitted && alert(<p>Employee submitted!</p>)}
+        {submitted && (
+          <div className="alert alert-success mt-2">Employee submitted!</div>
+        )}
       </div>
     </form>
   );
