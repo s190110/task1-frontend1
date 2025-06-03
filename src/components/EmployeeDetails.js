@@ -41,6 +41,12 @@ const EmployeeDetails = () => {
         {employee.skills?.map((s) => s.name).join(", ") || "None"}
       </p>
 
+      {/* ✅ Display hasExperience */}
+      <p>
+        <strong>Has Prior Experience:</strong>{" "}
+        {employee.hasExperience ? "Yes" : "No"}
+      </p>
+
       <h3>Experience</h3>
       {employee.experiences?.length > 0 ? (
         <table border="1" cellPadding="5">
@@ -71,7 +77,21 @@ const EmployeeDetails = () => {
         <p>No experience records found.</p>
       )}
 
-      <p>Total Experience :{employee?.totalExperience}</p>
+      <p>
+        <strong>Total Experience:</strong> {employee?.totalExperience}
+      </p>
+
+      {employee.photo && (
+        <div>
+          <strong>Photo:</strong>
+          <br />
+          <img
+            src={employee.photo}
+            alt="Employee"
+            style={{ width: "150px", height: "150px", objectFit: "cover" }}
+          />
+        </div>
+      )}
     </div>
   );
 };

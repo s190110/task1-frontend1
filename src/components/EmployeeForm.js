@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useFormik } from "formik";
-import { Field, Form, Formik } from "formik";
 import * as Yup from "yup";
 import "../css/EmployeeForm.css";
-import Select from "react-select";
 import {
   fetchSkills,
   submitEmployee,
@@ -18,6 +16,7 @@ const EmployeeForm = () => {
   const [departments, setDepartments] = useState([]);
   const [wings, setWings] = useState([]);
   const [totalExperience, setTotalExperience] = useState("");
+  const [photoPreview, setPhotoPreview] = useState(null);
 
   useEffect(() => {
     fetchSkills().then((res) => {
@@ -48,6 +47,7 @@ const EmployeeForm = () => {
       skills: [],
       wing: "",
       department: "",
+      hasExperience: "",
       experiences: [
         {
           location: "",
@@ -58,6 +58,7 @@ const EmployeeForm = () => {
         },
       ],
       totalExperience: "",
+      photo: "",
     },
     validationSchema: Yup.object({
       firstName: Yup.string().required("Required"),
@@ -70,13 +71,16 @@ const EmployeeForm = () => {
     onSubmit: async (values) => {
       const payload = {
         ...values,
+        hasExperience: values.hasExperience === "yes",
         wing: { id: values.wing },
         department: { id: values.department },
         skills: values.skills.map((s) => ({ id: s.value })),
         totalExperience: totalExperience,
+        photo: values.photo,
       };
       await submitEmployee(payload);
       setSubmitted(true);
+
       formik.resetForm();
     },
   });
@@ -89,7 +93,6 @@ const EmployeeForm = () => {
       let age = today.getFullYear() - dob.getFullYear();
       const m = today.getMonth() - dob.getMonth();
 
-      // Adjust age if birthday hasn't occurred yet this year
       if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
         age--;
       }
@@ -146,7 +149,13 @@ const EmployeeForm = () => {
 
     formik.setFieldValue("experiences", [
       ...formik.values.experiences,
-      { location: "", organization: "", from: "", to: "", experience: "" },
+      {
+        location: "",
+        organization: "",
+        fromDate: "",
+        toDate: "",
+        experience: "",
+      },
     ]);
   };
 
@@ -237,13 +246,42 @@ const EmployeeForm = () => {
         </div>
 
         <div className="form-row">
-          <label>Skills :</label>
-          <Select
-            isMulti
-            options={skillsOptions}
-            value={formik.values.skills}
-            onChange={(value) => formik.setFieldValue("skills", value)}
-          />
+          <label>Skills:</label>
+          <div className="form-check d-flex flex-wrap gap-3">
+            {skillsOptions.map((skill) => (
+              <div key={skill.value} className="form-check">
+                <input
+                  type="checkbox"
+                  id={skill.value}
+                  name="skills"
+                  value={skill.value}
+                  checked={formik.values.skills.some(
+                    (s) => s.value === skill.value
+                  )}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    const selectedSkills = formik.values.skills;
+
+                    if (checked) {
+                      formik.setFieldValue("skills", [
+                        ...selectedSkills,
+                        skill,
+                      ]);
+                    } else {
+                      formik.setFieldValue(
+                        "skills",
+                        selectedSkills.filter((s) => s.value !== skill.value)
+                      );
+                    }
+                  }}
+                  className="form-check-input"
+                />
+                <label htmlFor={skill.value} className="form-check-label">
+                  {skill.label}
+                </label>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="form-row">
@@ -283,82 +321,152 @@ const EmployeeForm = () => {
             ))}
           </select>
         </div>
-
-        <div>
+        <div className="form-row">
+          <label>Do you have any experience?</label>
           <div>
-            <h5>Experience</h5>
-            {formik.values.experiences.map((exp, index) => (
-              <div
-                key={index}
-                className="experience-row d-flex align-items-center gap-2 mb-2"
-              >
-                <strong>{index + 1}.</strong>
-
-                <input
-                  placeholder="Location"
-                  name={`experiences.${index}.location`}
-                  value={exp.location}
-                  onChange={(e) =>
-                    handleExperienceChange(index, "location", e.target.value)
-                  }
-                />
-
-                <input
-                  placeholder="Organization"
-                  name={`experiences.${index}.organization`}
-                  value={exp.organization}
-                  onChange={(e) =>
-                    handleExperienceChange(
-                      index,
-                      "organization",
-                      e.target.value
-                    )
-                  }
-                />
-
-                <input
-                  type="date"
-                  name={`experiences.${index}.fromDate`}
-                  value={exp.fromDate}
-                  onChange={(e) =>
-                    handleExperienceChange(index, "fromDate", e.target.value)
-                  }
-                />
-
-                <input
-                  type="date"
-                  name={`experiences.${index}.toDate`}
-                  value={exp.toDate}
-                  onChange={(e) =>
-                    handleExperienceChange(index, "toDate", e.target.value)
-                  }
-                />
-
-                <div className="experience-actions">
-                  <button
-                    type="button"
-                    onClick={() => removeExperience(index)}
-                    className="btn btn-sm btn-outline-danger"
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="d-flex justify-content-end mt-2">
-            <button
-              type="button"
-              onClick={addExperience}
-              className="btn btn-m btn-outline-primary"
-            >
-              Add Experience
-            </button>
+            <label>
+              <input
+                type="radio"
+                name="hasExperience"
+                value="yes"
+                onChange={formik.handleChange}
+                checked={formik.values.hasExperience === "yes"}
+              />{" "}
+              Yes
+            </label>
+            <label className="ms-3">
+              <input
+                type="radio"
+                name="hasExperience"
+                value="no"
+                onChange={(e) => {
+                  formik.handleChange(e);
+                  formik.setFieldValue("experiences", []); // Clear experience if "No"
+                  setTotalExperience("");
+                }}
+                checked={formik.values.hasExperience === "no"}
+              />{" "}
+              No
+            </label>
           </div>
         </div>
 
+        {formik.values.hasExperience === "yes" && (
+          <div>
+            <div>
+              <h5>Experience</h5>
+              <div className="experience-headings d-flex align-items-center gap-2 mb-2 fw-bold">
+                <span style={{ width: "20px" }}></span>{" "}
+                <span style={{ flex: 1 }}>Location</span>
+                <span style={{ flex: 1 }}>Organization</span>
+                <span style={{ flex: 1 }}>From Date</span>
+                <span style={{ flex: 1 }}>To Date</span>
+                <span style={{ width: "80px" }}></span>
+              </div>
+
+              {formik.values.experiences.map((exp, index) => (
+                <div
+                  key={index}
+                  className="experience-row d-flex align-items-center gap-2 mb-2"
+                >
+                  <strong>{index + 1}.</strong>
+
+                  <input
+                    placeholder="Location"
+                    name={`experiences.${index}.location`}
+                    value={exp.location}
+                    onChange={(e) =>
+                      handleExperienceChange(index, "location", e.target.value)
+                    }
+                  />
+
+                  <input
+                    placeholder="Organization"
+                    name={`experiences.${index}.organization`}
+                    value={exp.organization}
+                    onChange={(e) =>
+                      handleExperienceChange(
+                        index,
+                        "organization",
+                        e.target.value
+                      )
+                    }
+                  />
+
+                  <input
+                    type="date"
+                    name={`experiences.${index}.fromDate`}
+                    value={exp.fromDate}
+                    onChange={(e) =>
+                      handleExperienceChange(index, "fromDate", e.target.value)
+                    }
+                  />
+
+                  <input
+                    type="date"
+                    name={`experiences.${index}.toDate`}
+                    value={exp.toDate}
+                    onChange={(e) =>
+                      handleExperienceChange(index, "toDate", e.target.value)
+                    }
+                  />
+
+                  <div className="experience-actions">
+                    <button
+                      type="button"
+                      onClick={() => removeExperience(index)}
+                      className="btn btn-sm btn-outline-danger"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="d-flex justify-content-end mt-2">
+              <button
+                type="button"
+                onClick={addExperience}
+                className="btn btn-m btn-outline-primary"
+              >
+                Add Experience
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="form-row">Total Experience : {totalExperience}</div>
+        <div className="form-row">
+          <label>Upload Photo:</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(event) => {
+              const file = event.currentTarget.files[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  formik.setFieldValue("photo", reader.result);
+                  setPhotoPreview(reader.result);
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
+          />
+        </div>
+
+        {photoPreview && (
+          <div className="form-row">
+            <label>Preview:</label>
+            <img
+              src={photoPreview}
+              alt="Employee"
+              style={{ width: "120px", height: "120px", objectFit: "cover" }}
+            />
+          </div>
+        )}
+
         <div
           style={{
             display: "flex",
@@ -376,7 +484,7 @@ const EmployeeForm = () => {
             onClick={() => {
               formik.resetForm();
               setSubmitted(false);
-              setTotalExperience(""); // also reset totalExperience state if needed
+              setTotalExperience("");
             }}
           >
             Reset
