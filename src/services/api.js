@@ -1,18 +1,8 @@
 import axios from "axios";
-import { useEffect } from "react";
 
 const API = axios.create({
   baseURL: "http://localhost:8080/api",
 });
-
-// const [employee, setEmployee] = useState([]);
-// useEffect = () => {
-//   fetchdata = async () => {
-//     const res = await axios.get("https://jsonplaceholder.typicode");
-
-//     setEmployee(res.data);
-//   };
-// };
 
 export const fetchWings = () => API.get("/wings");
 export const fetchDepartmentsByWingId = (id) =>

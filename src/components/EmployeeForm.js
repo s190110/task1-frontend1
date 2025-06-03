@@ -509,6 +509,7 @@ const EmployeeForm = () => {
               formik.resetForm();
               setSubmitted(false);
               setTotalExperience("");
+              setPhotoPreview(null); // clear preview manually
             }}
             className="btn btn-secondary"
           >

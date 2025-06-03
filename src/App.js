@@ -5,7 +5,6 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./components/Home";
 import EmployeeForm from "./components/EmployeeForm";
 import EmployeeList from "./components/EmployeeList";
-import EmployeeDetails from "./components/EmployeeDetails";
 import Navbar from "./components/NavBar";
 
 function App() {
@@ -19,8 +18,6 @@ function App() {
         <Route path="/register" element={<EmployeeForm />} />
 
         <Route path="/employees" element={<EmployeeList />} />
-
-        {/* <Route path="/employees/:id" element={<EmployeeDetails />} /> */}
       </Routes>
     </Router>
   );
