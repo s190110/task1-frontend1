@@ -191,27 +191,39 @@ const EmployeeForm = () => {
 
         {/* Gender */}
         <div className="form-row">
-          <label>Gender:</label>
-          <label>
-            <input
-              type="radio"
-              name="gender"
-              value="Male"
-              onChange={formik.handleChange}
-              checked={formik.values.gender === "Male"}
-            />
-            Male
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="gender"
-              value="Female"
-              onChange={formik.handleChange}
-              checked={formik.values.gender === "Female"}
-            />
-            Female
-          </label>
+          <label className="form-label">Gender:</label>
+          <div className="radio-group">
+            <label className="radio-option">
+              <input
+                type="radio"
+                name="gender"
+                value="Male"
+                onChange={formik.handleChange}
+                checked={formik.values.gender === "Male"}
+              />
+              Male
+            </label>
+            <label className="radio-option">
+              <input
+                type="radio"
+                name="gender"
+                value="Female"
+                onChange={formik.handleChange}
+                checked={formik.values.gender === "Female"}
+              />
+              Female
+            </label>
+            <label className="radio-option">
+              <input
+                type="radio"
+                name="gender"
+                value="Others"
+                onChange={formik.handleChange}
+                checked={formik.values.gender === "Others"}
+              />
+              Others
+            </label>
+          </div>
           {formik.touched.gender && formik.errors.gender && (
             <div className="error">{formik.errors.gender}</div>
           )}

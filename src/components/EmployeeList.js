@@ -59,86 +59,96 @@ const EmployeeList = () => {
         </Modal.Header>
         <Modal.Body>
           {selectedEmployee ? (
-            <div>
-              <p>
-                <strong>First Name:</strong> {selectedEmployee.firstName}
-              </p>
-              <p>
-                <strong>Last Name:</strong> {selectedEmployee.lastName}
-              </p>
-              <p>
-                <strong>Gender:</strong> {selectedEmployee.gender}
-              </p>
-              <p>
-                <strong>Date of Birth:</strong> {selectedEmployee.dateOfBirth}
-              </p>
-              <p>
-                <strong>Age:</strong> {selectedEmployee.age}
-              </p>
-              <p>
-                <strong>Date Joined:</strong> {selectedEmployee.dateOfJoined}
-              </p>
-              <p>
-                <strong>Address:</strong> {selectedEmployee.address}
-              </p>
-              <p>
-                <strong>Skills:</strong>{" "}
-                {selectedEmployee.skills?.map((s) => s.name).join(", ") ||
-                  "None"}
-              </p>
-              <p>
-                <strong>Has Prior Experience:</strong>{" "}
-                {selectedEmployee.hasExperience ? "Yes" : "No"}
-              </p>
+            <div
+              className="d-flex flex-wrap align-items-start"
+              style={{ gap: "10 px" }}
+            >
+              {/* Left side - Details */}
+              <div style={{ flex: 1, minWidth: "250px" }}>
+                <p>
+                  <strong>First Name:</strong> {selectedEmployee.firstName}
+                </p>
+                <p>
+                  <strong>Last Name:</strong> {selectedEmployee.lastName}
+                </p>
+                <p>
+                  <strong>Gender:</strong> {selectedEmployee.gender}
+                </p>
+                <p>
+                  <strong>Date of Birth:</strong> {selectedEmployee.dateOfBirth}
+                </p>
+                <p>
+                  <strong>Age:</strong> {selectedEmployee.age}
+                </p>
+                <p>
+                  <strong>Date Joined:</strong> {selectedEmployee.dateOfJoined}
+                </p>
+                <p>
+                  <strong>Address:</strong> {selectedEmployee.address}
+                </p>
+                <p>
+                  <strong>Skills:</strong>{" "}
+                  {selectedEmployee.skills?.map((s) => s.name).join(", ") ||
+                    "None"}
+                </p>
+                <p>
+                  <strong>Has Prior Experience:</strong>{" "}
+                  {selectedEmployee.hasExperience ? "Yes" : "No"}
+                </p>
 
-              {selectedEmployee.experiences?.length > 0 ? (
-                <>
-                  <h5>Experience</h5>
-                  <table className="table table-sm table-bordered">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Location</th>
-                        <th>Organization</th>
-                        <th>From</th>
-                        <th>To</th>
-                        <th>Experience</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedEmployee.experiences.map((exp, i) => (
-                        <tr key={i}>
-                          <td>{i + 1}</td>
-                          <td>{exp.location}</td>
-                          <td>{exp.organization}</td>
-                          <td>{exp.fromDate}</td>
-                          <td>{exp.toDate}</td>
-                          <td>{exp.experience}</td>
+                {selectedEmployee.experiences?.length > 0 ? (
+                  <>
+                    <h5>Experience</h5>
+                    <table className="table table-sm table-bordered">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Location</th>
+                          <th>Organization</th>
+                          <th>From</th>
+                          <th>To</th>
+                          <th>Experience</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </>
-              ) : (
-                <p>No experience records found.</p>
-              )}
+                      </thead>
+                      <tbody>
+                        {selectedEmployee.experiences.map((exp, i) => (
+                          <tr key={i}>
+                            <td>{i + 1}</td>
+                            <td>{exp.location}</td>
+                            <td>{exp.organization}</td>
+                            <td>{exp.fromDate}</td>
+                            <td>{exp.toDate}</td>
+                            <td>{exp.experience}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </>
+                ) : (
+                  <p>No experience records found.</p>
+                )}
 
-              <p>
-                <strong>Total Experience:</strong>{" "}
-                {selectedEmployee.totalExperience}
-              </p>
+                <p>
+                  <strong>Total Experience:</strong>{" "}
+                  {selectedEmployee.totalExperience}
+                </p>
+              </div>
 
+              {/* Right side - Photo */}
               {selectedEmployee.photo && (
-                <div>
-                  <strong>Photo:</strong>
-                  <br />
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ marginBottom: "8px", fontWeight: "bold" }}>
+                    Photo:
+                  </div>
                   <img
                     src={selectedEmployee.photo}
                     alt="Employee"
                     style={{
-                      width: "150px",
-                      height: "150px",
+                      width: "160px",
+                      height: "160px",
                       objectFit: "cover",
+                      borderRadius: "8px",
+                      border: "1px solid #ccc",
                     }}
                   />
                 </div>
@@ -148,6 +158,7 @@ const EmployeeList = () => {
             <p>Loading...</p>
           )}
         </Modal.Body>
+
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>
             Close
