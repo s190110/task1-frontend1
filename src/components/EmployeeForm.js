@@ -70,6 +70,7 @@ const EmployeeForm = () => {
       setSubmitted(true);
       formik.resetForm();
       setTotalExperience("");
+      setPhotoPreview(null);
     },
   });
 
@@ -359,7 +360,6 @@ const EmployeeForm = () => {
             <div className="error">{formik.errors.department}</div>
           )}
         </div>
-
         {/* Experience Radio */}
         <div className="form-row">
           <label>Do you have any experience?</label>
@@ -368,7 +368,25 @@ const EmployeeForm = () => {
               type="radio"
               name="hasExperience"
               value="yes"
-              onChange={formik.handleChange}
+              onChange={async (e) => {
+                formik.handleChange(e);
+                // Initialize experiences if empty
+                if (
+                  !formik.values.experiences ||
+                  formik.values.experiences.length === 0
+                ) {
+                  formik.setFieldValue("experiences", [
+                    {
+                      location: "",
+                      organization: "",
+                      fromDate: "",
+                      toDate: "",
+                      experience: "",
+                    },
+                  ]);
+                  setTotalExperience("");
+                }
+              }}
               checked={formik.values.hasExperience === "yes"}
             />
             Yes
@@ -398,63 +416,83 @@ const EmployeeForm = () => {
             <h5>Experience</h5>
             {formik.values.experiences.map((exp, index) => (
               <div key={index} className="experience-row">
-                <input
-                  placeholder="Location"
-                  value={exp.location}
-                  onChange={(e) =>
-                    handleExperienceChange(index, "location", e.target.value)
-                  }
-                />
-                {formik.errors.experiences?.[index]?.location && (
-                  <div className="error">
-                    {formik.errors.experiences[index].location}
-                  </div>
-                )}
+                <div className="field-group">
+                  <label htmlFor={`location-${index}`}>Location:</label>
+                  <input
+                    id={`location-${index}`}
+                    placeholder="Location"
+                    value={exp.location}
+                    onChange={(e) =>
+                      handleExperienceChange(index, "location", e.target.value)
+                    }
+                  />
+                  {formik.errors.experiences?.[index]?.location && (
+                    <div className="error">
+                      {formik.errors.experiences[index].location}
+                    </div>
+                  )}
+                </div>
 
-                <input
-                  placeholder="Organization"
-                  value={exp.organization}
-                  onChange={(e) =>
-                    handleExperienceChange(
-                      index,
-                      "organization",
-                      e.target.value
-                    )
-                  }
-                />
-                {formik.errors.experiences?.[index]?.organization && (
-                  <div className="error">
-                    {formik.errors.experiences[index].organization}
-                  </div>
-                )}
+                <div className="field-group">
+                  <label htmlFor={`organization-${index}`}>Organization:</label>
+                  <input
+                    id={`organization-${index}`}
+                    placeholder="Organization"
+                    value={exp.organization}
+                    onChange={(e) =>
+                      handleExperienceChange(
+                        index,
+                        "organization",
+                        e.target.value
+                      )
+                    }
+                  />
+                  {formik.errors.experiences?.[index]?.organization && (
+                    <div className="error">
+                      {formik.errors.experiences[index].organization}
+                    </div>
+                  )}
+                </div>
 
-                <input
-                  type="date"
-                  value={exp.fromDate}
-                  onChange={(e) =>
-                    handleExperienceChange(index, "fromDate", e.target.value)
-                  }
-                />
-                {formik.errors.experiences?.[index]?.fromDate && (
-                  <div className="error">
-                    {formik.errors.experiences[index].fromDate}
-                  </div>
-                )}
+                <div className="field-group">
+                  <label htmlFor={`fromDate-${index}`}>From Date:</label>
+                  <input
+                    id={`fromDate-${index}`}
+                    type="date"
+                    value={exp.fromDate}
+                    onChange={(e) =>
+                      handleExperienceChange(index, "fromDate", e.target.value)
+                    }
+                  />
+                  {formik.errors.experiences?.[index]?.fromDate && (
+                    <div className="error">
+                      {formik.errors.experiences[index].fromDate}
+                    </div>
+                  )}
+                </div>
 
-                <input
-                  type="date"
-                  value={exp.toDate}
-                  onChange={(e) =>
-                    handleExperienceChange(index, "toDate", e.target.value)
-                  }
-                />
-                {formik.errors.experiences?.[index]?.toDate && (
-                  <div className="error">
-                    {formik.errors.experiences[index].toDate}
-                  </div>
-                )}
+                <div className="field-group">
+                  <label htmlFor={`toDate-${index}`}>To Date:</label>
+                  <input
+                    id={`toDate-${index}`}
+                    type="date"
+                    value={exp.toDate}
+                    onChange={(e) =>
+                      handleExperienceChange(index, "toDate", e.target.value)
+                    }
+                  />
+                  {formik.errors.experiences?.[index]?.toDate && (
+                    <div className="error">
+                      {formik.errors.experiences[index].toDate}
+                    </div>
+                  )}
+                </div>
 
-                <button type="button" onClick={() => removeExperience(index)}>
+                <button
+                  type="button"
+                  onClick={() => removeExperience(index)}
+                  disabled={formik.values.experiences.length === 1} // Disable if only one experience
+                >
                   Delete
                 </button>
               </div>

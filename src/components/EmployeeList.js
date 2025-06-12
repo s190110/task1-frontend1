@@ -8,15 +8,23 @@ const EmployeeList = () => {
   const [showModal, setShowModal] = useState(false);
 
   const fetchEmployeeById = async (id) => {
-    const res = await axios.get(`http://localhost:8080/api/employees/${id}`);
-    setSelectedEmployee(res.data);
-    setShowModal(true);
+    try {
+      const res = await axios.get(`http://localhost:8080/api/employees/${id}`);
+      setSelectedEmployee(res.data);
+      setShowModal(true);
+    } catch (error) {
+      console.error("Error fetching employee details:", error);
+    }
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await axios.get("http://localhost:8080/api/employees");
-      setEmployees(response.data);
+      try {
+        const response = await axios.get("http://localhost:8080/api/employees");
+        setEmployees(response.data);
+      } catch (error) {
+        console.error("Error fetching employees:", error);
+      }
     };
     fetchData();
   }, []);
@@ -61,7 +69,7 @@ const EmployeeList = () => {
           {selectedEmployee ? (
             <div
               className="d-flex flex-wrap align-items-start"
-              style={{ gap: "10 px" }}
+              style={{ gap: "10px" }}
             >
               {/* Left side - Details */}
               <div style={{ flex: 1, minWidth: "250px" }}>
