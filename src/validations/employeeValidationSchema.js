@@ -7,7 +7,9 @@ export const employeeValidationSchema = Yup.object({
   dateOfBirth: Yup.date()
     .required("Date of Birth is required")
     .max(new Date(), "Date of Birth cannot be in the future"),
-  dateOfJoined: Yup.date().required("Date of Joining is required"),
+  dateOfJoined: Yup.date()
+    .required("Date of Joining is required")
+    .min(Yup.ref("dateOfBirth"), "Date of Joining must be after Date of Birth"),
   address: Yup.string().required("Address is required"),
   skills: Yup.array()
     .min(1, "Select at least one skill")
@@ -37,5 +39,5 @@ export const employeeValidationSchema = Yup.object({
     otherwise: (schema) => schema.notRequired(),
   }),
 
-  photo: Yup.string().nullable(),
+  photo: Yup.string().nullable(), // or use conditional required as mentioned above
 });

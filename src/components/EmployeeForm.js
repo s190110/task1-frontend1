@@ -1,23 +1,25 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useFormik } from "formik";
-import "../css/EmployeeForm.css";
 import { employeeValidationSchema } from "../validations/employeeValidationSchema";
 import {
   fetchSkills,
   submitEmployee,
   fetchDepartmentsByWingId,
   fetchWings,
+  updateEmployee,
 } from "../services/api";
+import "../css/EmployeeForm.css";
+
 import { differenceInMonths } from "date-fns";
 
-const EmployeeForm = () => {
+const EmployeeForm = ({ initialData = null, onSuccess, onCancel }) => {
   const [skillsOptions, setSkillsOptions] = useState([]);
-  const [submitted, setSubmitted] = useState(false);
   const [departments, setDepartments] = useState([]);
   const [wings, setWings] = useState([]);
   const [totalExperience, setTotalExperience] = useState("");
   const [photoPreview, setPhotoPreview] = useState(null);
 
+  // Load skills and wings on mount
   useEffect(() => {
     fetchSkills().then((res) => {
       setSkillsOptions(
@@ -30,33 +32,54 @@ const EmployeeForm = () => {
     fetchWings().then((res) => setWings(res.data));
   }, []);
 
+  // Load departments if editing and wing already known
+  useEffect(() => {
+    if (initialData && initialData.wing && initialData.wing.id) {
+      fetchDepartmentsByWingId(initialData.wing.id).then((res) =>
+        setDepartments(res.data)
+      );
+    }
+  }, [initialData]);
+
+  // Initialize formik with initialData or empty
   const formik = useFormik({
+    enableReinitialize: true,
     initialValues: {
-      firstName: "",
-      lastName: "",
-      gender: "",
-      dateOfBirth: "",
-      age: "",
-      dateOfJoined: "",
-      address: "",
-      skills: [],
-      wing: "",
-      department: "",
-      hasExperience: "",
-      experiences: [
-        {
-          location: "",
-          organization: "",
-          fromDate: "",
-          toDate: "",
-          experience: "",
-        },
-      ],
-      totalExperience: "",
-      photo: "",
+      firstName: initialData?.firstName || "",
+      lastName: initialData?.lastName || "",
+      gender: initialData?.gender || "",
+      dateOfBirth: initialData?.dateOfBirth || "",
+      age: initialData?.age || "",
+      dateOfJoined: initialData?.dateOfJoined || "",
+      address: initialData?.address || "",
+      skills:
+        initialData?.skills?.map((s) => ({ value: s.id, label: s.name })) || [],
+      wing: initialData?.wing?.id || "",
+      department: initialData?.department?.id || "",
+      hasExperience: initialData?.hasExperience ? "yes" : "no",
+      experiences:
+        initialData?.experiences?.length > 0
+          ? initialData.experiences.map((exp) => ({
+              location: exp.location || "",
+              organization: exp.organization || "",
+              fromDate: exp.fromDate || "",
+              toDate: exp.toDate || "",
+              experience: exp.experience || "",
+            }))
+          : [
+              {
+                location: "",
+                organization: "",
+                fromDate: "",
+                toDate: "",
+                experience: "",
+              },
+            ],
+      totalExperience: initialData?.totalExperience || "",
+      photo: initialData?.photo || "",
     },
     validationSchema: employeeValidationSchema,
-    onSubmit: async (values) => {
+    onSubmit: async (values, { setSubmitting }) => {
       const payload = {
         ...values,
         hasExperience: values.hasExperience === "yes",
@@ -66,14 +89,26 @@ const EmployeeForm = () => {
         totalExperience,
         photo: values.photo,
       };
-      await submitEmployee(payload);
-      setSubmitted(true);
-      formik.resetForm();
-      setTotalExperience("");
-      setPhotoPreview(null);
+
+      try {
+        if (initialData && initialData.id) {
+          // Update existing employee
+          await updateEmployee(initialData.id, payload);
+        } else {
+          // Create new employee
+          await submitEmployee(payload);
+        }
+        if (typeof onSuccess === "function") onSuccess();
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        // Optionally handle error state here
+      } finally {
+        setSubmitting(false);
+      }
     },
   });
 
+  // Update age automatically on dateOfBirth change
   useEffect(() => {
     if (formik.values.dateOfBirth) {
       const dob = new Date(formik.values.dateOfBirth);
@@ -83,10 +118,11 @@ const EmployeeForm = () => {
       if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
         age--;
       }
-      formik.setFieldValue("age", age);
+      formik.setFieldValue("age", age, false);
     }
-  }, [formik.values.dateOfBirth]);
+  }, [formik.values.dateOfBirth]); // run whenever dateOfBirth changes
 
+  // Calculate total experience months and years
   const calculateTotalExperience = (experiences) => {
     let totalMonths = 0;
     experiences.forEach((exp) => {
@@ -103,6 +139,7 @@ const EmployeeForm = () => {
     setTotalExperience(`${years}y ${months}m`);
   };
 
+  // Handle experience input changes
   const handleExperienceChange = (index, field, value) => {
     const updated = [...formik.values.experiences];
     updated[index][field] = value;
@@ -120,10 +157,11 @@ const EmployeeForm = () => {
       }
     }
 
-    formik.setFieldValue("experiences", updated);
+    formik.setFieldValue("experiences", updated, false);
     calculateTotalExperience(updated);
   };
 
+  // Add experience
   const addExperience = () => {
     if (formik.values.experiences.length >= 5) {
       alert("You can only add up to 5 experiences.");
@@ -141,15 +179,49 @@ const EmployeeForm = () => {
     ]);
   };
 
+  // Remove experience
   const removeExperience = (index) => {
     const updated = [...formik.values.experiences];
     updated.splice(index, 1);
-    formik.setFieldValue("experiences", updated);
+    formik.setFieldValue("experiences", updated, false);
     calculateTotalExperience(updated);
   };
 
+  // Handle wing change & fetch departments
+  const handleWingChange = async (e) => {
+    const wingId = e.target.value;
+    formik.setFieldValue("wing", wingId);
+    formik.setFieldValue("department", "");
+    if (wingId) {
+      const res = await fetchDepartmentsByWingId(wingId);
+      setDepartments(res.data);
+    } else {
+      setDepartments([]);
+    }
+  };
+
+  // Handle photo upload and preview
+  const handlePhotoChange = (event) => {
+    const file = event.currentTarget.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        formik.setFieldValue("photo", reader.result);
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Initialize photo preview if editing
+  useEffect(() => {
+    if (initialData && initialData.photo) {
+      setPhotoPreview(initialData.photo);
+    }
+  }, [initialData]);
+
   return (
-    <form onSubmit={formik.handleSubmit}>
+    <form onSubmit={formik.handleSubmit} noValidate>
       <div
         style={{
           display: "flex",
@@ -158,7 +230,7 @@ const EmployeeForm = () => {
         }}
       >
         <h2>
-          <u>Employee Registration Form</u>
+          <u>{initialData ? "Edit Employee" : "Employee Registration Form"}</u>
         </h2>
       </div>
       <div className="employeeform">
@@ -170,6 +242,7 @@ const EmployeeForm = () => {
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.firstName}
+            required
           />
           {formik.touched.firstName && formik.errors.firstName && (
             <div className="error">{formik.errors.firstName}</div>
@@ -184,6 +257,7 @@ const EmployeeForm = () => {
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.lastName}
+            required
           />
           {formik.touched.lastName && formik.errors.lastName && (
             <div className="error">{formik.errors.lastName}</div>
@@ -201,6 +275,7 @@ const EmployeeForm = () => {
                 value="Male"
                 onChange={formik.handleChange}
                 checked={formik.values.gender === "Male"}
+                required
               />
               Male
             </label>
@@ -239,6 +314,7 @@ const EmployeeForm = () => {
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
             value={formik.values.dateOfBirth}
+            required
           />
           {formik.touched.dateOfBirth && formik.errors.dateOfBirth && (
             <div className="error">{formik.errors.dateOfBirth}</div>
@@ -322,13 +398,7 @@ const EmployeeForm = () => {
           <select
             name="wing"
             value={formik.values.wing}
-            onChange={async (e) => {
-              const selectedWingId = e.target.value;
-              formik.setFieldValue("wing", selectedWingId);
-              formik.setFieldValue("department", "");
-              const res = await fetchDepartmentsByWingId(selectedWingId);
-              setDepartments(res.data);
-            }}
+            onChange={handleWingChange}
           >
             <option value="">Select Wing</option>
             {wings.map((w) => (
@@ -360,6 +430,7 @@ const EmployeeForm = () => {
             <div className="error">{formik.errors.department}</div>
           )}
         </div>
+
         {/* Experience Radio */}
         <div className="form-row">
           <label>Do you have any experience?</label>
@@ -368,9 +439,8 @@ const EmployeeForm = () => {
               type="radio"
               name="hasExperience"
               value="yes"
-              onChange={async (e) => {
+              onChange={(e) => {
                 formik.handleChange(e);
-                // Initialize experiences if empty
                 if (
                   !formik.values.experiences ||
                   formik.values.experiences.length === 0
@@ -491,39 +561,31 @@ const EmployeeForm = () => {
                 <button
                   type="button"
                   onClick={() => removeExperience(index)}
-                  disabled={formik.values.experiences.length === 1} // Disable if only one experience
+                  disabled={formik.values.experiences.length === 1}
                 >
                   Delete
                 </button>
               </div>
             ))}
-            <button type="button" onClick={addExperience}>
+            <button
+              type="button"
+              className="add-experience-btn"
+              onClick={addExperience}
+            >
               Add Experience
             </button>
           </>
         )}
 
         {/* Total Experience */}
-        <div className="form-row">Total Experience: {totalExperience}</div>
+        <div className="form-row" style={{ marginTop: 20 }}>
+          Total Experience: {totalExperience}
+        </div>
 
         {/* Photo Upload */}
         <div className="form-row">
           <label>Upload Photo:</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(event) => {
-              const file = event.currentTarget.files[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  formik.setFieldValue("photo", reader.result);
-                  setPhotoPreview(reader.result);
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-          />
+          <input type="file" accept="image/*" onChange={handlePhotoChange} />
         </div>
 
         {photoPreview && (
@@ -537,27 +599,28 @@ const EmployeeForm = () => {
         )}
 
         {/* Buttons */}
-        <div className="form-row" style={{ gap: 100 }}>
-          <button type="submit" className="btn btn-success">
-            Submit
+        <div style={{ display: "flex", justifyContent: "space-around" }}>
+          <button
+            type="submit"
+            className="btn btn-success"
+            disabled={formik.isSubmitting}
+          >
+            {initialData ? "Update" : "Submit"}
           </button>
           <button
             type="button"
             onClick={() => {
               formik.resetForm();
-              setSubmitted(false);
+              if (typeof onCancel === "function") onCancel();
               setTotalExperience("");
-              setPhotoPreview(null); // clear preview manually
+              setPhotoPreview(null);
             }}
-            className="btn btn-secondary"
+            className="reset-btn"
+            disabled={formik.isSubmitting}
           >
-            Reset
+            Reset{" "}
           </button>
         </div>
-
-        {submitted && (
-          <div className="alert alert-success mt-2">Employee submitted!</div>
-        )}
       </div>
     </form>
   );

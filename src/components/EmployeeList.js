@@ -1,33 +1,51 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Modal, Button } from "react-bootstrap";
+import EmployeeForm from "./EmployeeForm";
 
 const EmployeeList = () => {
   const [employees, setEmployees] = useState([]);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [editEmployeeData, setEditEmployeeData] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
-  const fetchEmployeeById = async (id) => {
+  const fetchEmployees = async () => {
     try {
-      const res = await axios.get(`http://localhost:8080/api/employees/${id}`);
-      setSelectedEmployee(res.data);
-      setShowModal(true);
+      const response = await axios.get("http://localhost:8080/api/employees");
+      setEmployees(response.data);
     } catch (error) {
-      console.error("Error fetching employee details:", error);
+      console.error("Error fetching employees:", error);
     }
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get("http://localhost:8080/api/employees");
-        setEmployees(response.data);
-      } catch (error) {
-        console.error("Error fetching employees:", error);
-      }
-    };
-    fetchData();
+    fetchEmployees();
   }, []);
+
+  // Open modal to edit employee, passing the existing employee data
+  const handleEditClick = (employee) => {
+    setEditEmployeeData(employee);
+    setShowModal(true);
+  };
+
+  // Open modal to view employee details
+  const handleViewClick = (employee) => {
+    setSelectedEmployee(employee);
+    setShowModal(true);
+  };
+
+  // Close modal and reset edit data
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setEditEmployeeData(null);
+    setSelectedEmployee(null);
+  };
+
+  // Callback from EmployeeForm on successful submit to refresh list and close modal
+  const handleFormSubmitSuccess = () => {
+    fetchEmployees();
+    handleCloseModal();
+  };
 
   return (
     <div className="container mt-4">
@@ -37,7 +55,7 @@ const EmployeeList = () => {
           <tr>
             <th>#</th>
             <th>Name</th>
-            <th>View</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -50,9 +68,13 @@ const EmployeeList = () => {
               <td>
                 <Button
                   variant="info"
-                  onClick={() => fetchEmployeeById(emp.id)}
+                  className="me-2"
+                  onClick={() => handleViewClick(emp)}
                 >
                   View
+                </Button>
+                <Button variant="warning" onClick={() => handleEditClick(emp)}>
+                  Edit
                 </Button>
               </td>
             </tr>
@@ -60,10 +82,11 @@ const EmployeeList = () => {
         </tbody>
       </table>
 
-      {/* Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
+      <Modal show={showModal} onHide={handleCloseModal} size="lg" centered>
         <Modal.Header closeButton>
-          <Modal.Title>Employee Details</Modal.Title>
+          <Modal.Title>
+            {selectedEmployee ? "Employee Details" : "Edit Employee"}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           {selectedEmployee ? (
@@ -71,7 +94,6 @@ const EmployeeList = () => {
               className="d-flex flex-wrap align-items-start"
               style={{ gap: "10px" }}
             >
-              {/* Left side - Details */}
               <div style={{ flex: 1, minWidth: "250px" }}>
                 <p>
                   <strong>First Name:</strong> {selectedEmployee.firstName}
@@ -168,11 +190,26 @@ const EmployeeList = () => {
         </Modal.Body>
 
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
+          <Button variant="secondary" onClick={handleCloseModal}>
             Close
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {editEmployeeData && (
+        <Modal show={showModal} onHide={handleCloseModal} size="lg" centered>
+          <Modal.Header closeButton>
+            <Modal.Title>Edit Employee</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <EmployeeForm
+              initialData={editEmployeeData}
+              onSuccess={handleFormSubmitSuccess}
+              onCancel={handleCloseModal}
+            />
+          </Modal.Body>
+        </Modal>
+      )}
     </div>
   );
 };

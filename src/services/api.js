@@ -11,3 +11,5 @@ export const fetchSkills = () => API.get("/skills");
 export const fetchEmployees = () => API.get("/employees");
 export const fetchEmployeeById = (id) => API.get(`/employees/${id}`);
 export const submitEmployee = (data) => API.post("/employees", data);
+
+export const updateEmployee = (id, data) => API.put(`/employees/${id}`, data);
